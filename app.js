@@ -155,7 +155,8 @@ app.post("/auth/google", async (req,res)=>{
         });
       } catch (error) {
         // Handle errors appropriately
-        res.status(500).send('Internal Server Error');
+
+        res.status(500).json({error: error});
       }
 })
 
