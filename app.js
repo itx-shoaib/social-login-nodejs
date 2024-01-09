@@ -54,9 +54,9 @@ app.post("/auth/google", async (req,res)=>{
         const { data } = await axios.post('https://oauth2.googleapis.com/token', {
           code: authorizationCode,
           client_id:
-            '291549058431-k8hv31v9f5sos4ic1n7ourli9rqdpki3.apps.googleusercontent.com',
-          client_secret: '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',
-          redirect_uri: 'http://localhost:3000',
+            '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
+          client_secret: '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',
+          redirect_uri: 'http://localhost:4000',
           grant_type: 'authorization_code',
         });
   
@@ -64,9 +64,9 @@ app.post("/auth/google", async (req,res)=>{
         // console.log('data:', data);
   
         let oauth2Client = new google.auth.OAuth2(
-          '291549058431-k8hv31v9f5sos4ic1n7ourli9rqdpki3.apps.googleusercontent.com',
-          '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',
-          'http://localhost:3000',
+          '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
+          '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',
+          'http://localhost:4000',
         );
   
         // 'https://www.googleapis.com/auth/userinfo.email',
