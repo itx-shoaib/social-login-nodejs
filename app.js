@@ -116,8 +116,8 @@ app.post("/auth/google", async (req,res)=>{
         const broadcastResponse = await youtube.liveStreams.insert({
           requestBody: {
             snippet: {
-              title: 'For kids',
-              description: 'This is for students',
+              title: 'Testing stream',
+              description: 'This is for Testing purpose',
             },
             status: {
               streamStatus: 'active',
@@ -128,10 +128,12 @@ app.post("/auth/google", async (req,res)=>{
               resolution: 'variable',
               format: '',
             },
-  
-            kind: 'youtube#liveBroadcast',
+            contentDetails: {
+              isReusable: true,
+            },
+            kind: "youtube#liveStream",
           },
-          part: ['snippet,status,cdn'],
+          part: ['snippet,status,contentDetails,cdn'],
         });
   
         // const broadCastId = broadcastResponse.data.id;
