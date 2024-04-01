@@ -115,23 +115,13 @@ app.post("/auth/google", async (req,res)=>{
         // Creating live broadcast
         
         // Get the current time in milliseconds
-const currentTimeMillis = Date.now();
 
-// Add 5 minutes in milliseconds (5 * 60 * 1000)
-const scheduledStartTimeMillis = currentTimeMillis + (5 * 60 * 1000);
-
-// Create a new Date object representing the scheduled start time
-const scheduledStartTime = new Date(scheduledStartTimeMillis);
-
-// Format the scheduled start time in ISO 8601 format
-const scheduledStartTimeIso = scheduledStartTime.toISOString();
         
         const broadcastResponse = await youtube.liveStreams.insert({
           requestBody: {
             snippet: {
               title: 'Testing stream',
               description: 'This is for Testing purpose',
-              scheduledStartTime: scheduledStartTimeIso
 
             },
             status: {
