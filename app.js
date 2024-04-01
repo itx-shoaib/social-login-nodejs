@@ -131,7 +131,6 @@ app.post("/auth/google", async (req,res)=>{
               frameRate: 'variable',
               ingestionType: 'rtmp',
               resolution: 'variable',
-              format: '',
             },
             contentDetails: {
               isReusable: true,
