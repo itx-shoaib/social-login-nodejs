@@ -134,6 +134,7 @@ app.post("/auth/google", async (req,res)=>{
             },
             contentDetails: {
               isReusable: true,
+                contentRating: 'yt:contentRating:none'
             },
             kind: "youtube#liveStream",
           },
