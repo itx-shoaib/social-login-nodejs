@@ -116,30 +116,30 @@ app.post("/auth/google", async (req,res)=>{
         
         // Get the current time in milliseconds
 
-        
-        const broadcastResponse = await youtube.liveStreams.insert({
-          requestBody: {
-            snippet: {
-              title: 'Testing stream',
-              description: 'This is for Testing purpose',
+        // important
+        // const broadcastResponse = await youtube.liveStreams.insert({
+        //   requestBody: {
+        //     snippet: {
+        //       title: 'Testing stream',
+        //       description: 'This is for Testing purpose',
 
-            },
-            status: {
-            privacyStatus: "public",
-            },
-            cdn: {
-              frameRate: 'variable',
-              ingestionType: 'rtmp',
-              resolution: 'variable',
-            },
-            contentDetails: {
-              isReusable: true,
-                contentRating: 'yt:contentRating:none'
-            },
-            kind: "youtube#liveStream",
-          },
-          part: ['snippet,status,contentDetails,cdn'],
-        });
+        //     },
+        //     status: {
+        //     privacyStatus: "public",
+        //     },
+        //     cdn: {
+        //       frameRate: 'variable',
+        //       ingestionType: 'rtmp',
+        //       resolution: 'variable',
+        //     },
+        //     contentDetails: {
+        //       isReusable: true,
+        //         contentRating: 'yt:contentRating:none'
+        //     },
+        //     kind: "youtube#liveStream",
+        //   },
+        //   part: ['snippet,status,contentDetails,cdn'],
+        // });
   
         // const broadCastId = broadcastResponse.data.id;
   
@@ -156,10 +156,42 @@ app.post("/auth/google", async (req,res)=>{
   
         // Now you have the user data
         // You can send it as a JSON response or perform other actions based on your requirements
-        res.status(200).json({
-          response: responseData,
-          streamData: broadcastResponse?.data?.cdn?.ingestionInfo,
+
+         const channelsResponse = await youtube.channels.list({
+            part: 'contentDetails',
+            mine: true
         });
+
+        // Extract the channel ID
+        const channelId = channelsResponse.data.items[0].id;
+
+        // Get the live broadcast settings for the channel
+        const liveBroadcastsResponse = await youtube.liveBroadcasts.list({
+            part: 'snippet',
+            mine: true
+        });
+
+        // Extract the broadcast ID
+        const broadcastId = liveBroadcastsResponse.data.items[0].id;
+
+        // Get the RTMP settings for the live broadcast
+        const liveStreamsResponse = await youtube.liveStreams.list({
+            part: 'cdn',
+            id: broadcastId
+        });
+
+        // Extract the RTMP ingest URL and stream name
+        const rtmpSettings = liveStreamsResponse.data.items[0].cdn.ingestionInfo;
+
+        // Send response
+        res.status(200).json({
+            response: userData,
+            streamData: rtmpSettings
+        });
+        // res.status(200).json({
+        //   response: responseData,
+        //   streamData: broadcastResponse?.data?.cdn?.ingestionInfo,
+        // });
       } catch (error) {
         // Handle errors appropriately
 
