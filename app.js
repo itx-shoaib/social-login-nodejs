@@ -103,95 +103,59 @@ app.post("/auth/google", async (req,res)=>{
           auth: oauth2Client,
         });
   
-        // Set the required scopes
-  
-        // Check if the authentication token has the required scopes
-        // const currentScopes = oauth2Client.scopes;
-        // console.log('currnetScopes:', oauth2Client);
-        // const missingScopes = requiredScopes.filter(
-        //   (scope) => !currentScopes.includes(scope),
-        // );
-  
-        // Creating live broadcast
-        
-        // Get the current time in milliseconds
+    
+        const scheduledStartTime = new Date();
+        scheduledStartTime.setMinutes(scheduledStartTime.getMinutes() + 2)
+        const liveBroadcastResponse = await youtube.liveBroadcasts.insert({
+        part: 'snippet,status,contentDetails',
+        requestBody: {
+            snippet: {
+                title: 'Scheduled Live Stream',
+                scheduledStartTime: scheduledStartTime.toISOString(), // Specify the scheduled start time in ISO 8601 format
+                description: 'This is a scheduled live stream'
+            },
+            status: {
+                privacyStatus: 'public' // Set privacy status to public
+            }
+        }
+    });
 
-        // important
-        // const broadcastResponse = await youtube.liveStreams.insert({
-        //   requestBody: {
-        //     snippet: {
-        //       title: 'Testing stream',
-        //       description: 'This is for Testing purpose',
+    // Extract the broadcast ID
+    const broadcastId = liveBroadcastResponse.data.id;
+    // Create a live stream associated with the broadcast
+    const liveStreamResponse = await youtube.liveStreams.insert({
+        part: 'snippet,cdn',
+        requestBody: {
+            snippet: {
+                title: 'Scheduled Live Stream',
+                description: 'This is a scheduled live stream',
+            },
+         
+            cdn: {
+              frameRate: 'variable',
+              ingestionType: 'rtmp',
+              resolution: 'variable',
+              format: ''
+          }
+        }
+    });
 
-        //     },
-        //     status: {
-        //     privacyStatus: "public",
-        //     },
-        //     cdn: {
-        //       frameRate: 'variable',
-        //       ingestionType: 'rtmp',
-        //       resolution: 'variable',
-        //     },
-        //     contentDetails: {
-        //       isReusable: true,
-        //         contentRating: 'yt:contentRating:none'
-        //     },
-        //     kind: "youtube#liveStream",
-        //   },
-        //   part: ['snippet,status,contentDetails,cdn'],
-        // });
-  
-        // const broadCastId = broadcastResponse.data.id;
-  
-  
-        // Fetch user data using the access token
-        // const { data: userData } = await axios.get(
-        //   'https://www.googleapis.com/oauth2/v2/userinfo',
-        //   {
-        //     headers: {
-        //       Authorization: `Bearer ${accessToken}`,
-        //     },
-        //   },
-        // );
-  
-        // Now you have the user data
-        // You can send it as a JSON response or perform other actions based on your requirements
+    // Extract the live stream ID
+    const liveStreamId = liveStreamResponse.data.id;
 
-         const channelsResponse = await youtube.channels.list({
-            part: 'contentDetails',
-            mine: true
-        });
+    // Bind the live stream to the live broadcast
+    await youtube.liveBroadcasts.bind({
+        part: 'id,snippet,contentDetails',
+        id: broadcastId,
+        streamId: liveStreamId
+    });
 
-        // Extract the channel ID
-        const channelId = channelsResponse.data.items[0].id;
-
-        // Get the live broadcast settings for the channel
-        const liveBroadcastsResponse = await youtube.liveBroadcasts.list({
-            part: 'snippet',
-            mine: true
-        });
-
-        // Extract the broadcast ID
-        const broadcastId = liveBroadcastsResponse.data.items[0].id;
-
-        // Get the RTMP settings for the live broadcast
-        const liveStreamsResponse = await youtube.liveStreams.list({
-            part: 'cdn',
-            id: broadcastId
-        });
-
-        // Extract the RTMP ingest URL and stream name
-        const rtmpSettings = liveStreamsResponse.data.items[0].cdn.ingestionInfo;
-
-        // Send response
         res.status(200).json({
-            response: userData,
-            streamData: rtmpSettings
+          response: responseData,
+          accessToken:accessToken,
+          broadcastId:broadcastId,
+          streamData: liveStreamResponse?.data?.cdn?.ingestionInfo,
         });
-        // res.status(200).json({
-        //   response: responseData,
-        //   streamData: broadcastResponse?.data?.cdn?.ingestionInfo,
-        // });
       } catch (error) {
         // Handle errors appropriately
 
@@ -203,6 +167,111 @@ app.get('/', (req, res) => {
     res.json({ user: req.user });
 });
 
+
+app.post('/livechat', async (req, res) => {
+  try {
+    // Create OAuth2 client with your client ID and client secret
+    let oauth2Client = new google.auth.OAuth2(
+      '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
+      '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',
+      'http://localhost:4000',
+    );
+
+
+    // Set access token obtained during authentication
+    oauth2Client.setCredentials({ access_token: req.body.accessToken });
+
+    // Create YouTube Data API client
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2Client
+    });
+
+    // Retrieve live broadcast details to get the live chat ID
+    const broadcastResponse = await youtube.liveBroadcasts.list({
+      part: 'snippet',
+      id: req.body.broadcastId
+    });
+
+    const liveChatId = broadcastResponse.data.items[0]?.snippet?.liveChatId;
+
+    if (!liveChatId) {
+      throw new Error('Live chat ID not found');
+    }
+
+    // Fetch live chat messages
+    const chatMessages = await youtube.liveChatMessages.list({
+      part: 'snippet,authorDetails',
+      liveChatId,
+     
+    });
+console.log(chatMessages.data.items);
+    // Extract messages from response
+    const messages = chatMessages.data.items.map(item => ({
+      author: item.authorDetails.displayName,
+      id: item.id,
+      message: item.snippet.textMessageDetails.messageText
+    }));
+
+    res.status(200).json({ success: true, messages });
+  } catch (error) {
+    console.error('Error:', error.message);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+app.post('/livechat/messages', async (req, res) => {
+  try {
+    let oauth2Client = new google.auth.OAuth2(
+      '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
+      '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',
+      'http://localhost:4000',
+    );
+
+
+    oauth2Client.setCredentials({ access_token: req.body.accessToken });
+
+    // Create YouTube Data API client
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2Client
+    });
+
+    // Retrieve live chat ID associated with the live broadcast
+    const response = await youtube.liveBroadcasts.list({
+      part: 'snippet',
+      id: req.body.broadcastId
+    });
+
+    // Extract live chat ID from response
+    const liveChatId = response.data.items[0]?.snippet?.liveChatId;
+
+    if (!liveChatId) {
+      throw new Error('Live chat ID not found');
+    }
+
+    // Insert a new live chat message
+    const chatResponse = await youtube.liveChatMessages.insert({
+      part: 'snippet',
+      requestBody: {
+        snippet: {
+          liveChatId,
+          type: 'textMessageEvent',
+          textMessageDetails: {
+            messageText: req.body.message
+          }
+        }
+      }
+    });
+
+    console.log('Live chat message sent:', chatResponse.data);
+
+    res.status(200).json({ success: true, message: 'Message sent successfully' });
+  } catch (error) {
+    console.error('Error:', error.message);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
