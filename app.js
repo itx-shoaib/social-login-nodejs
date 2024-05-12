@@ -56,7 +56,7 @@ app.post("/auth/google", async (req,res)=>{
           client_id:
             '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
           client_secret: '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',
-          redirect_uri: 'http://localhost:4000',
+          redirect_uri: 'https://tvstartup.glamhiv.com',
           grant_type: 'authorization_code',
         });
   
@@ -66,7 +66,7 @@ app.post("/auth/google", async (req,res)=>{
         let oauth2Client = new google.auth.OAuth2(
           '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
           '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',
-          'http://localhost:4000',
+          'https://tvstartup.glamhiv.com',
         );
   
         // 'https://www.googleapis.com/auth/userinfo.email',
@@ -174,7 +174,7 @@ app.post('/livechat', async (req, res) => {
     let oauth2Client = new google.auth.OAuth2(
       '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
       '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',
-      'http://localhost:4000',
+      'https://tvstartup.glamhiv.com',
     );
 
 
@@ -225,7 +225,7 @@ app.post('/livechat/messages', async (req, res) => {
     let oauth2Client = new google.auth.OAuth2(
       '277653104935-2266rjc8p63uji7mq62qgodtj8s31b8c.apps.googleusercontent.com',
       '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',
-      'http://localhost:4000',
+      'https://tvstartup.glamhiv.com',
     );
 
 
